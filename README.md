@@ -13,11 +13,12 @@ sudo mv snet /usr/bin
 ```
 ### Windows
 1. [Download snet.exe](https://github.com/thompsonbear/snet/releases/download/v0.1.0-alpha/snet.exe)
-2. Add snet.exe to the path environment variable
+2. Add %USERPROFILE%\go\bin to the path environment variable **(Can skip if you have Go installed)**
     * Run sysdm.cpl
     * Advanced Tab > Environment Variables...
     * Select variable "path" and select Edit
-    * Move the snet.exe file to one of the directories listed or create "%USERPROFILE%\go\bin"
+    * Add "%USERPROFILE%\go\bin" to the list
+3. Move snet.exe to %USERPROFILE%\go\bin **(You may need to create this directory)**
 
 ## Usage
 #### Address with CIDR
