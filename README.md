@@ -35,7 +35,7 @@ NETWORK      USEABLE          BROADCAST      MASK           CIDR
 192.168.0.0  192.168.0.1-254  192.168.0.255  255.255.255.0  /24
 ```
 ## Planned Features
-:heavy_check_mark:  Basic IPv4 Subnet Calculator
+:green_circle:  Basic IPv4 Subnet Calculator
 
 :black_circle: List all networks with the specified CIDR
 
