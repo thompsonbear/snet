@@ -11,6 +11,14 @@ curl -LJO https://github.com/thompsonbear/snet/releases/download/v0.1.0-alpha/sn
 chmod +x snet
 sudo mv snet /usr/bin
 ```
+### Windows
+1. [Download snet.exe](https://github.com/thompsonbear/snet/releases/download/v0.1.0-alpha/snet.exe)
+2. Add snet.exe to the path environment variable
+    * Run sysdm.cpl
+    * Advanced Tab > Environment Variables...
+    * Select variable "path" and select Edit
+    * Move the snet.exe file to one of the directories listed or create "%USERPROFILE%\go\bin"
+
 ## Usage
 #### Address with CIDR
 ```Bash
