@@ -37,7 +37,7 @@ NETWORK      USEABLE          BROADCAST      MASK           CIDR
 ## Planned Features
 :green_circle:  Basic IPv4 Subnet Calculator
 
-:black_circle: List all networks with the specified CIDR
+:black_circle: List all similar networks with the specified CIDR
 
 :black_circle: Optional configuration file to add and reorder output columns
 
