@@ -7,12 +7,12 @@ Simple, easy to use, CLI based subnetting calculator/tool built in Go
 ## Installation
 ### Linux
 ```Bash
-curl -LJO https://github.com/thompsonbear/snet/releases/download/v0.1.0-alpha/snet
+curl -LJO https://github.com/thompsonbear/snet/releases/download/v1.0.0/snet
 chmod +x snet
 sudo mv snet /usr/bin
 ```
 ### Windows
-1. [Download snet.exe](https://github.com/thompsonbear/snet/releases/download/v0.1.0-alpha/snet.exe)
+1. [Download snet.exe](https://github.com/thompsonbear/snet/releases/download/v1.0.0/snet.exe)
 2. Add %USERPROFILE%\go\bin to the path environment variable **(Can skip if you have Go installed)**
     * Run sysdm.cpl
     * Advanced Tab > Environment Variables...
@@ -38,10 +38,6 @@ NETWORK      USEABLE          BROADCAST      MASK           CIDR
 :green_circle:  Basic IPv4 Subnet Calculator
 
 :black_circle: List all neighboring networks with the specified CIDR
-
-:black_circle: Optional configuration file to add and reorder output columns
-
-:black_circle: Split the specified address block into a specified amount of subnets
 
 :black_circle: IPv6 Support :neckbeard:
 
