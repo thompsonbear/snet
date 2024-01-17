@@ -2,7 +2,7 @@ package main
 
 import (
 	"fmt"
-	"regexp"
+	"net"
 )
 
 
@@ -28,18 +28,23 @@ func decimalToBinary(decimal int) string {
 	return binary
 }
 
+
+func getIPType(address string) string {
+	ip := net.ParseIP(address)
+	if ip == nil { return "invalid" }
+
+	if ip.To4() != nil {
+		return "ipv4"
+	} else if ip.To16() != nil {
+		return "ipv6"
+	}
+	return "unknown"
+}
+
 func main() {
 	input := "192.168.2.3"
 
-	cidrRegex := regexp.MustCompile(`(\d{1,3}\.){3}\d{1,3}\/\d{1,2}`)
-	ipRegex := regexp.MustCompile(`(\d{1,3}\.){3}\d{1,3}`)
+	fmt.Println(getIPType(input))
 
-	if cidrRegex.MatchString(input) {
-		fmt.Println("ipv4 address with subnet mask")
-	} else if ipRegex.MatchString(input) {
-		fmt.Println("ipv4 address")
-	} else {
-		fmt.Println("invalid input")
-	}
 
 }
