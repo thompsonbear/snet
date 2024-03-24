@@ -1,3 +1,3 @@
-module github.com/thompsonbear/snet
+module snet
 
 go 1.22
