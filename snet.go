@@ -3,48 +3,70 @@ package main
 import (
 	"fmt"
 	"net"
+	"net/netip"
 )
 
-
-func binaryToDecimal(binary string) int {
-	decimal := 0
-	for i := 0; i < len(binary); i++ {
-		decimal = decimal * 2
-		if binary[i] == '1' {
-			decimal = decimal + 1
-		}
+func bitsToMask(bits int, ipv4 bool) (netip.Addr, error) {
+	if bits < 0 || bits > 128 {
+		return netip.IPv4Unspecified(), fmt.Errorf("invalid bit length")
 	}
-	return decimal
+
+	var ip net.IP
+	var addr netip.Addr
+
+	if(bits <= 32 && ipv4 == true) {
+		mask := net.CIDRMask(bits, 32)
+		ip = net.IP(mask).To4()
+	} else {
+		mask := net.CIDRMask(bits, 128)
+		ip = net.IP(mask).To16()
+	}
+	addr, _ = netip.ParseAddr(ip.String())
+	return addr, nil
 }
 
-func decimalToBinary(decimal int) string {
-	if decimal == 0 { return "0" }
-	binary := ""
-	for decimal > 0 {
-		remainder := decimal % 2
-		binary = fmt.Sprintf("%d%s", remainder, binary)
-		decimal = decimal / 2
+func getNetDetails(ip netip.Addr, bits int) (netip.Addr, netip.Addr, error) {
+	prefix := netip.PrefixFrom(ip, bits)
+	if prefix.IsValid() == false {
+		return netip.IPv4Unspecified(), netip.IPv4Unspecified(), fmt.Errorf("invalid network")
 	}
-	return binary
+
+	mask, _ := bitsToMask(bits, ip.Is4())
+
+	ipBytes := ip.AsSlice()
+	maskBytes := mask.AsSlice()
+
+	// Network Address (Bitwise AND)
+	naBytes := make([]byte, len(ipBytes))
+    for i := range ipBytes {
+		naBytes[i] = ipBytes[i] & maskBytes[i]
+    }
+
+	// Broadcast Address (Bitwise OR)
+	baBytes := make([]byte, len(ipBytes))
+	for i := range ipBytes {
+		baBytes[i] = ipBytes[i] | ^maskBytes[i]
+    }
+
+	na, _ := netip.AddrFromSlice(naBytes)
+	ba, _ := netip.AddrFromSlice(baBytes)
+	
+	return na, ba, nil
 }
 
-
-func getIPType(address string) string {
-	ip := net.ParseIP(address)
-	if ip == nil { return "invalid" }
-
-	if ip.To4() != nil {
-		return "ipv4"
-	} else if ip.To16() != nil {
-		return "ipv6"
-	}
-	return "unknown"
-}
 
 func main() {
-	input := "192.168.2.3"
+	addr,err := netip.ParseAddr("192.168.20.12")
 
-	fmt.Println(getIPType(input))
+	if err != nil {
+		fmt.Println("Error:", err)
+	}
 
+	na, ba, err := getNetDetails(addr, 23)
+	if err != nil {
+		fmt.Println("Error:", err)
+	}
 
+	fmt.Println("Network Address:", na)
+	fmt.Println("Broadcast Address:", ba)
 }
