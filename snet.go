@@ -25,48 +25,122 @@ func bitsToMask(bits int, ipv4 bool) (netip.Addr, error) {
 	return addr, nil
 }
 
-func getNetDetails(ip netip.Addr, bits int) (netip.Addr, netip.Addr, error) {
-	prefix := netip.PrefixFrom(ip, bits)
-	if prefix.IsValid() == false {
-		return netip.IPv4Unspecified(), netip.IPv4Unspecified(), fmt.Errorf("invalid network")
-	}
-
-	mask, _ := bitsToMask(bits, ip.Is4())
-
-	ipBytes := ip.AsSlice()
-	maskBytes := mask.AsSlice()
-
-	// Network Address (Bitwise AND)
+func getNetworkAddrBytes(ipBytes []byte, maskBytes []byte) []byte {
 	naBytes := make([]byte, len(ipBytes))
     for i := range ipBytes {
+		// Bitwise AND
 		naBytes[i] = ipBytes[i] & maskBytes[i]
     }
+	return naBytes
+}
 
-	// Broadcast Address (Bitwise OR)
+func getBroadcastAddrBytes(ipBytes []byte, maskBytes []byte) []byte {
 	baBytes := make([]byte, len(ipBytes))
-	for i := range ipBytes {
+    for i := range ipBytes {
+		// Bitwise OR
 		baBytes[i] = ipBytes[i] | ^maskBytes[i]
     }
+	return baBytes
+}
+
+// network stuct based on netip.Prefix to add custom methods
+type Prefix struct {
+	netip.Prefix
+	// addr
+	// bits
+}
+
+// network mask of the network
+func (p Prefix) Mask() (netip.Addr, error) {
+	addr := p.Addr()
+	bits := p.Bits()
+
+	mask, err := bitsToMask(bits, addr.Is4())
+	if err != nil {
+		return netip.IPv4Unspecified(), fmt.Errorf("invalid network mask")
+	}
+
+	return mask, nil
+}
+
+// network address of the network ex. 192.168.20.15/23 -> 192.168.20.0
+func (p Prefix) NetworkAddr() (netip.Addr, error) {
+	addr := p.Addr()
+	mask, err := p.Mask()
+	if err != nil {
+		return netip.IPv4Unspecified(), err
+	}
+	
+	naBytes := getNetworkAddrBytes(addr.AsSlice(), mask.AsSlice())
+
+	na, ok := netip.AddrFromSlice(naBytes)
+	if !ok {
+		return netip.IPv4Unspecified(), fmt.Errorf("invalid network address")
+	}
+
+	return na, nil
+}
+
+// broadcast address of the network ex. 192.168.20.15/23 -> 192.168.21.255
+func (p Prefix) BroadcastAddr() (netip.Addr, error) {
+	addr := p.Addr()
+	mask, err := p.Mask()
+	if err != nil {
+		return netip.IPv4Unspecified(), err
+	}
+	
+	baBytes := getBroadcastAddrBytes(addr.AsSlice(), mask.AsSlice())
+
+	ba, ok := netip.AddrFromSlice(baBytes)
+	if !ok {
+		return netip.IPv4Unspecified(), fmt.Errorf("invalid network address")
+	}
+
+	return ba, nil
+}
+
+// list of all hosts in the network
+func (p Prefix) Hosts() ([]netip.Addr, error) {
+	addr := p.Addr()
+	mask, err := p.Mask()
+	if err != nil {
+		return []netip.Addr{}, err
+	}
+
+	naBytes := getNetworkAddrBytes(addr.AsSlice(), mask.AsSlice())
+	baBytes := getBroadcastAddrBytes(addr.AsSlice(), mask.AsSlice())
 
 	na, _ := netip.AddrFromSlice(naBytes)
 	ba, _ := netip.AddrFromSlice(baBytes)
-	
-	return na, ba, nil
+
+	cursor := na
+	hosts := []netip.Addr{}
+	for cursor.Less(ba.Prev()) {
+		hosts = append(hosts, cursor.Next())
+		cursor = cursor.Next()
+	}
+
+	return hosts, nil
 }
 
 
 func main() {
-	addr,err := netip.ParseAddr("192.168.20.12")
+	addr,_ := netip.ParseAddr("172.12.20.15")
 
-	if err != nil {
-		fmt.Println("Error:", err)
-	}
+	prefix := Prefix{netip.PrefixFrom(addr, 23)}
+	na, _ := prefix.NetworkAddr()
+	ba, _ := prefix.BroadcastAddr()
+	hosts, _ := prefix.Hosts()
 
-	na, ba, err := getNetDetails(addr, 23)
-	if err != nil {
-		fmt.Println("Error:", err)
+	var netType string
+	if(addr.IsPrivate()) {
+		netType = "Private"
+	} else {
+		netType = "Public"
 	}
 
 	fmt.Println("Network Address:", na)
 	fmt.Println("Broadcast Address:", ba)
+	fmt.Println("Hosts:", len(hosts))
+	fmt.Println("Type:", netType)
 }
