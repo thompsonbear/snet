@@ -1,7 +1,6 @@
 package main
 
-import "testing"
-
+// import "testing"
 
 // t.Log("Similar to fmt.Println() and concurrently safe")
 // t.Fail() // marks the test as failed but continues execution

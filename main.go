@@ -1,7 +1,9 @@
 package main
 
 import (
+	"flag"
 	"fmt"
+	"math"
 	"net"
 	"net/netip"
 )
@@ -99,7 +101,7 @@ func (p Prefix) BroadcastAddr() (netip.Addr, error) {
 	return ba, nil
 }
 
-// list of all hosts in the network
+// list of all hosts in the network (smaller mask bits take exponitially more time)
 func (p Prefix) Hosts() ([]netip.Addr, error) {
 	addr := p.Addr()
 	mask, err := p.Mask()
@@ -123,24 +125,92 @@ func (p Prefix) Hosts() ([]netip.Addr, error) {
 	return hosts, nil
 }
 
+// count hosts in 0(1) time complexity
+func (p Prefix) HostsCount() (int, error) {
+	addr := p.Addr()
+	bits := p.Bits()
 
-func main() {
-	addr,_ := netip.ParseAddr("172.12.20.15")
+	if (bits < 0 || bits > 128) {
+		return 0, fmt.Errorf("invalid bit length")
+	}
 
-	prefix := Prefix{netip.PrefixFrom(addr, 23)}
+	var hostBits int
+	if(addr.Is4()) {
+		hostBits = 32 - bits
+	} else if (addr.Is6()) {
+		hostBits = 128 - bits
+	} else {
+		return 0, fmt.Errorf("invalid address")
+	}
+
+	hosts := math.Pow(2, float64(hostBits)) - 2
+
+	return int(hosts), nil
+}
+
+func printNetwork(prefix Prefix) {
 	na, _ := prefix.NetworkAddr()
 	ba, _ := prefix.BroadcastAddr()
-	hosts, _ := prefix.Hosts()
-
-	var netType string
-	if(addr.IsPrivate()) {
-		netType = "Private"
-	} else {
-		netType = "Public"
-	}
+	hostCount, _ := prefix.HostsCount()
 
 	fmt.Println("Network Address:", na)
 	fmt.Println("Broadcast Address:", ba)
-	fmt.Println("Hosts:", len(hosts))
-	fmt.Println("Type:", netType)
+	fmt.Println("# of Hosts:", hostCount)
+}
+
+func addrToBits(addr netip.Addr) (int, error) {
+	addrBytes := addr.AsSlice()
+
+    bits := 0
+    for _, b := range addrBytes {
+        // Count the number of set bits in each byte
+        for mask := byte(0x80); mask != 0; mask >>= 1 {
+            if b&mask != 0 {
+                bits++
+            }
+        }
+    }
+
+    return bits, nil
+}
+
+
+func main() {
+	flag.Parse()
+	args := flag.Args()
+
+	if(len(args) == 1) {
+		p, err := netip.ParsePrefix(args[0])
+		if err != nil{
+			fmt.Println("Invalid network provided")
+			return
+		}
+		prefix := Prefix{p}
+		
+		printNetwork(prefix)
+	} else if (len(args) > 1) {
+		ip1 := args[0]
+		ip2 := args[1]
+
+		addr1, err := netip.ParseAddr(ip1)
+		if err != nil {
+			fmt.Println("Invalid address provided")
+			return
+		}
+
+		addr2, err := netip.ParseAddr(ip2)
+		if err != nil {
+			fmt.Println("Invalid address provided")
+			return
+		}
+
+		maskBits, _ := addrToBits(addr2)
+		p := netip.PrefixFrom(addr1, maskBits)
+		if(p.IsValid()) {
+			prefix := Prefix{p}
+			printNetwork(prefix)
+		} else {
+			fmt.Println("Invalid network provided")
+		}
+	}
 }
