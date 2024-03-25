@@ -5,16 +5,32 @@ import (
 	"fmt"
 	"net/netip"
 	"snet/calc"
+	"strconv"
+
+	"github.com/charmbracelet/lipgloss"
+	"github.com/charmbracelet/lipgloss/table"
 )
 
 func printNetwork(prefix calc.Prefix) {
 	na, _ := prefix.NetworkAddr()
 	ba, _ := prefix.BroadcastAddr()
+	mask, _ := prefix.Mask()
 	hostCount, _ := prefix.HostsCount()
 
-	fmt.Println("Network Address:", na)
-	fmt.Println("Broadcast Address:", ba)
-	fmt.Println("# of Hosts:", hostCount)
+	t := table.New().
+    BorderStyle(lipgloss.NewStyle().Foreground(lipgloss.Color("5"))).
+	StyleFunc(func(row, col int) lipgloss.Style {
+		switch {
+			case row == 0:
+				return lipgloss.NewStyle().Foreground(lipgloss.Color("13")).Bold(true).PaddingLeft(1).PaddingRight(1)
+			default: 
+				return lipgloss.NewStyle().Foreground(lipgloss.Color("12")).PaddingLeft(1).PaddingRight(1)
+		}
+	}).Headers("Prefix", "Network", "Broadcast", "Mask", "Useable Hosts")
+
+	t.Row(prefix.String(), na.String(), ba.String(), mask.String(), strconv.Itoa(hostCount))
+	
+	fmt.Println(t)
 }
 
 func main() {
